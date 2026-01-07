@@ -17,8 +17,9 @@ const carSchema = mongoose.Schema({
     type: Number,
     required: true,
   },
-  carType: {
-    type: String,
+  category: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: "Category",
     required: true,
   },
   capacity: {
@@ -36,5 +37,4 @@ const carSchema = mongoose.Schema({
   },
 });
 
-
-module.exports = mongoose.model("Car", carSchema)
+module.exports = mongoose.model("Car", carSchema);
