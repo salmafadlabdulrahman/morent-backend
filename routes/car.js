@@ -1,22 +1,8 @@
 const express = require("express");
-// const multer  = require('multer');
-// const path = require("path")
 
 const Car = require("../models/Car");
 const Category = require("../models/Category");
 const upload = require("../middleware/uploadMiddleware");
-const cloudinary = require("../config/cloudinary");
-
-// const storage = multer.diskStorage({
-//   destination: function(req, file, cb) {
-//     cb(null, path.join(__dirname, "../images"))
-//   },
-//   filename: function(req, file, cb) {
-//     cb(null, file.originalname)
-//   }
-// })
-
-// const upload = multer({storage})
 
 const router = express.Router();
 
@@ -44,24 +30,25 @@ router.get("/:id", async (req, res) => {
   res.status(200).json(car);
 });
 
-// router.post("/upload", upload.single("image"), async (req, res) => {
-//   return res.status(200).json({ message: "image uploaded!" });
-// });
-
-router.post("/", upload.single("image"), async (req, res) => {
+router.post("/", upload.array("images", 3), async (req, res) => {
   try {
-    console.log("Request body:", req.body);
-    console.log("Uploaded file:", req.file);
-
     const categoryExists = await Category.findById(req.body.category);
+
     if (!categoryExists) {
       return res.status(400).json({ message: "Category doesn't exist" });
     }
 
+    if (!req.files || req.files.length !== 3) {
+      console.log(req.files);
+      return res.status(400).json({ message: "3 images are required" });
+    }
+
+    const imageUrls = req.files.map((file) => file.path);
+
     let car = new Car({
       name: req.body.name,
       description: req.body.description,
-      image: req.file.filename,
+      images: imageUrls,
       price: req.body.price,
       category: req.body.category,
       capacity: req.body.capacity,
@@ -81,14 +68,25 @@ router.post("/", upload.single("image"), async (req, res) => {
   }
 });
 
-router.put("/:id", async (req, res) => {
+router.put("/:id", upload.array("images", 3), async (req, res) => {
   try {
+    const categoryExists = await Category.findById(req.body.category);
+    if (!categoryExists) {
+      return res.status(400).json({ message: "Invalid Category" });
+    }
+
+    if (!req.files || req.files.length !== 3) {
+      return res.status(400).json({ message: "3 images are required" });
+    }
+
+    const imageUrls = req.files.map((file) => file.path);
+
     const car = await Car.findByIdAndUpdate(
       req.params.id,
       {
         name: req.body.name,
         description: req.body.description,
-        image: req.body.image,
+        images: imageUrls,
         price: req.body.price,
         category: req.body.category,
         capacity: req.body.capacity,

@@ -9,9 +9,10 @@ const carSchema = mongoose.Schema({
     type: String,
     required: true,
   },
-  image: {
-    type: String,
+  images: {
+    type: [String],
     required: true,
+    validate: [arr => arr.length === 3, "3 images required"]
   },
   price: {
     type: Number,

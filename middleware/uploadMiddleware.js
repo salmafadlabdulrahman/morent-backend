@@ -7,14 +7,13 @@ const storage = new CloudinaryStorage({
   params: {
     folder: "morent-car-rental",
     allowed_formats: ["jpeg", "jpg", "webp", "png"],
-    // transformation: [{width: 1000, height: 750}]
   },
 });
 
 const upload = multer({
   storage,
   limits: {
-    fieldSize: 5 * 1024 * 1024,
+    fileSize: 5 * 1024 * 1024,
   },
   fileFilter: (req, file, cb) => {
     if (!file.originalname.match(/\.(jpg|jpeg|png|webp)$/)) {
