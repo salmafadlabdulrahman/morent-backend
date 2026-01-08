@@ -7,32 +7,53 @@ const upload = require("../middleware/uploadMiddleware");
 const router = express.Router();
 
 router.get("/", async (req, res) => {
-  const cars = await Car.find();
-  if (!cars) {
+  try {
+    const filter = {};
+    if (req.query.category) {
+      filter.category = req.query.category;
+    }
+    const cars = await Car.find(filter).populate("category");
+    console.log(filter);
+    console.log(cars.length);
+
+    if (cars.length === 0) {
+      return res.status(400).json({
+        message: "no cars exist",
+      });
+    }
+    res.status(200).json(cars);
+  } catch (error) {
     res.status(500).json({
       success: false,
-      message: "no cars exist",
+      message: "Failed to gets cars",
       error: error.message,
     });
   }
-  res.status(200).json(cars);
 });
 
 router.get("/:id", async (req, res) => {
-  const car = await Car.findById(req.params.id);
-  if (!car) {
+  try {
+    const car = await Car.findById(req.params.id).populate("category", "name");
+    if (!car) {
+      console.log(car);
+      return res.status(400).json({
+        message: "Car not found!",
+      });
+    }
+    res.status(200).json(car);
+  } catch (error) {
     res.status(500).json({
       success: false,
-      message: "Car not found!",
+      message: "Failed to fetch car",
       error: error.message,
     });
   }
-  res.status(200).json(car);
 });
 
 router.post("/", upload.array("images", 3), async (req, res) => {
   try {
     const categoryExists = await Category.findById(req.body.category);
+    console.log(categoryExists);
 
     if (!categoryExists) {
       return res.status(400).json({ message: "Category doesn't exist" });
@@ -57,7 +78,11 @@ router.post("/", upload.array("images", 3), async (req, res) => {
     });
 
     const newCar = await car.save();
-    res.status(201).json(newCar);
+    const populatedCar = await Car.findById(newCar._id).populate(
+      "category",
+      "name"
+    );
+    res.status(201).json(populatedCar);
   } catch (error) {
     console.log("Error details:", error);
     res.status(500).json({
@@ -94,7 +119,7 @@ router.put("/:id", upload.array("images", 3), async (req, res) => {
         gasoline: req.body.gasoline,
       },
       { new: true }
-    );
+    ).populate("category", "name");
     res.status(200).json(car);
   } catch (error) {
     res.status(500).json({
@@ -107,7 +132,10 @@ router.put("/:id", upload.array("images", 3), async (req, res) => {
 
 router.delete("/:id", async (req, res) => {
   try {
-    await Car.findByIdAndDelete(req.params.id);
+    const car = await Car.findByIdAndDelete(req.params.id);
+    if (!car) {
+      return res.status(400).json({ message: "Car Not Found" });
+    }
     res.status(200).json({ message: "Car deleted successfully!" });
   } catch (error) {
     res.status(500).json({
