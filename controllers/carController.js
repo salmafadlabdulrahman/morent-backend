@@ -1,27 +1,60 @@
-const express = require("express");
-
 const Car = require("../models/Car");
 const Category = require("../models/Category");
-const upload = require("../middleware/uploadMiddleware");
 
-const router = express.Router();
-
-router.get("/", async (req, res) => {
+const getCars = async (req, res) => {
   try {
+    const page = req.query.page || 1;
+    const limit = req.query.limit || 3;
+    const skip = (page - 1) * limit;
+
     const filter = {};
     if (req.query.category) {
-      filter.category = req.query.category;
+      const categories = req.query.category.split(",");
+      filter.category = { $in: categories };
     }
-    const cars = await Car.find(filter).populate("category");
-    console.log(filter);
-    console.log(cars.length);
+
+    if (req.query.capacity) {
+      const capacities = req.query.capacity.split(",");
+      filter.capacity = { $in: capacities };
+    }
+
+    if (req.query.price) {
+      const maxPrice = req.query.price;
+      filter.price = { $lte: Number(maxPrice) };
+    }
+
+    const [cars, total] = await Promise.all([
+      Car.find(filter)
+        .populate("category")
+        .sort({ createdAt: -1 })
+        .skip(skip)
+        .limit(limit),
+      Car.countDocuments(filter),
+    ]);
+
+    const totalPages = Math.ceil(total / limit);
 
     if (cars.length === 0) {
       return res.status(400).json({
         message: "no cars exist",
       });
     }
-    res.status(200).json(cars);
+
+    const response = {
+      success: true,
+      data: cars,
+      pagination: {
+        page,
+        limit,
+        total,
+        totalPages,
+        hasNextPage: page < totalPages,
+        hasPrevPage: page > 1,
+        nextPage: page < totalPages ? page + 1 : null,
+        prevPage: page > 1 ? page - 1 : null,
+      },
+    };
+    res.status(200).json(response);
   } catch (error) {
     res.status(500).json({
       success: false,
@@ -29,9 +62,9 @@ router.get("/", async (req, res) => {
       error: error.message,
     });
   }
-});
+};
 
-router.get("/:id", async (req, res) => {
+const getCarById = async (req, res) => {
   try {
     const car = await Car.findById(req.params.id).populate("category", "name");
     if (!car) {
@@ -48,12 +81,11 @@ router.get("/:id", async (req, res) => {
       error: error.message,
     });
   }
-});
+};
 
-router.post("/", upload.array("images", 3), async (req, res) => {
+const createCar = async (req, res) => {
   try {
     const categoryExists = await Category.findById(req.body.category);
-    console.log(categoryExists);
 
     if (!categoryExists) {
       return res.status(400).json({ message: "Category doesn't exist" });
@@ -82,6 +114,7 @@ router.post("/", upload.array("images", 3), async (req, res) => {
       "category",
       "name"
     );
+
     res.status(201).json(populatedCar);
   } catch (error) {
     console.log("Error details:", error);
@@ -91,9 +124,9 @@ router.post("/", upload.array("images", 3), async (req, res) => {
       error: error.message,
     });
   }
-});
+};
 
-router.put("/:id", upload.array("images", 3), async (req, res) => {
+const updateCar = async (req, res) => {
   try {
     const categoryExists = await Category.findById(req.body.category);
     if (!categoryExists) {
@@ -128,9 +161,9 @@ router.put("/:id", upload.array("images", 3), async (req, res) => {
       error: error.message,
     });
   }
-});
+};
 
-router.delete("/:id", async (req, res) => {
+const deleteCar = async (req, res) => {
   try {
     const car = await Car.findByIdAndDelete(req.params.id);
     if (!car) {
@@ -144,6 +177,6 @@ router.delete("/:id", async (req, res) => {
       error: error.message,
     });
   }
-});
+};
 
-module.exports = router;
+module.exports = { getCars, getCarById, createCar, updateCar, deleteCar };

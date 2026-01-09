@@ -1,5 +1,4 @@
 const mongoose = require("mongoose");
-const bcrypt = require("bcryptjs");
 
 const userSchema = new mongoose.Schema(
   {
@@ -16,7 +15,10 @@ const userSchema = new mongoose.Schema(
       lowercase: true,
     },
 
-    // profileImg: String,
+    profileImg: {
+      type: String,
+      default: "https://www.pngmart.com/files/23/Profile-PNG-HD.png"
+    },
     password: {
       type: String,
       required: [true, "Password is required"],

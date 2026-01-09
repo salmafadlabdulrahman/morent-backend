@@ -1,9 +1,6 @@
-const express = require("express");
-const router = express.Router();
-
 const Category = require("../models/Category");
 
-router.get("/", async (req, res) => {
+const getCategories = async (req, res) => {
   try {
     const categories = await Category.find();
     if (!categories.length) {
@@ -17,9 +14,9 @@ router.get("/", async (req, res) => {
       error: error.message,
     });
   }
-});
+};
 
-router.get("/:id", async (req, res) => {
+const getCategoryById = async (req, res) => {
   try {
     const category = await Category.findById(req.params.id);
     if (!category) {
@@ -33,9 +30,9 @@ router.get("/:id", async (req, res) => {
       error: error.message,
     });
   }
-});
+};
 
-router.post("/", async (req, res) => {
+const createCategory = async (req, res) => {
   try {
     let category = new Category({
       name: req.body.name,
@@ -49,9 +46,9 @@ router.post("/", async (req, res) => {
       error: error.message,
     });
   }
-});
+};
 
-router.put("/:id", async (req, res) => {
+const updateCategory = async (req, res) => {
   try {
     let category = await Category.findByIdAndUpdate(req.params.id, {
       name: req.body.name,
@@ -65,9 +62,9 @@ router.put("/:id", async (req, res) => {
       error: error.message,
     });
   }
-});
+};
 
-router.delete("/:id", async (req, res) => {
+const deleteCategory = async (req, res) => {
   try {
     const category = await Category.findByIdAndDelete(req.params.id);
     if (!category) {
@@ -81,6 +78,12 @@ router.delete("/:id", async (req, res) => {
       error: error.message,
     });
   }
-});
+};
 
-module.exports = router;
+module.exports = {
+  getCategories,
+  getCategoryById,
+  createCategory,
+  updateCategory,
+  deleteCategory,
+};

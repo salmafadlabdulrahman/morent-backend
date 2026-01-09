@@ -12,9 +12,9 @@ function authJwt() {
     isRevoked: isRevoked,
   }).unless({
     path: [
-      { url: "/api/v1/cars", method: ["GET", "OPTIONS"] },
-      "/api/v1/users/login",
-      "/api/v1/users/signup",
+      { url: /\/api\/v1\/cars(\/.*)?/, method: ["GET", "OPTIONS"] },
+      "/api/v1/auth/login",
+      "/api/v1/auth/signup",
     ],
   });
 }
@@ -26,10 +26,7 @@ async function isRevoked(req, token) {
   if (!token.payload.isAdmin) {
     return true;
   }
-
   return false;
 }
 
 module.exports = authJwt;
-
-
